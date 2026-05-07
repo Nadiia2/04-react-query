@@ -4,46 +4,39 @@ import type { Movie } from "../../types/movie";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import "./App.module.css";
 import fetchMovies from "../../services/movieService";
-import toast, { Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import MovieGrid from "../MovieGrid/MovieGrid";
 import Loader from "../Loader/Loader";
 import MovieModal from "../MovieModal/MovieModal";
-
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 export default function App() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [isError, setIsError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  // const [movies, setMovies] = useState<Movie[]>([]);
+  // const [isError, setIsError] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  const fetchQuery = async (query: string) => {
-    try {
-      setIsLoading(true);
-      setIsError(false);
+  const [name, setName] = useState("");
 
-      const newMovies = await fetchMovies(query);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["movies", name],
+    queryFn: () => fetchMovies(name),
+    enabled: name !== "",
+    placeholderData: keepPreviousData,
+  });
 
-      if (newMovies.length === 0) {
-        toast.error("No movies found for your request.");
-      }
-
-      setMovies(newMovies);
-    } catch {
-      toast.error("Error fetching movies");
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-    }
+  const fetchQuery = (newQuery: string) => {
+    setName(newQuery);
   };
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
-      {isLoading && <Loader />}
+      {!data && isLoading && <Loader />}
       <SearchBar onSubmit={fetchQuery} />
       {isError && <ErrorMessage />}
-      {movies.length > 0 && (
+      {data && (
         <MovieGrid
           onSelect={(movie) => setSelectedMovie(movie)}
-          movies={movies}
+          movies={data}
         />
       )}
 
