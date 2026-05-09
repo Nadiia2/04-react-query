@@ -18,7 +18,7 @@ export default function SearchBar({ onSubmit }: SearchBarProps) {
       onSubmit(query);
     } catch (error) {
       console.error("Submit error:", error);
-      //   toast.error("No movies found for your request.");
+      // toast.error("No movies found for your request.");
     }
   };
 
