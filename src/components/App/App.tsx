@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SearchBar from "../SearchBar/SearchBar";
 import type { Movie } from "../../types/movie";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
@@ -36,19 +36,28 @@ export default function App() {
   const [name, setName] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data, isSuccess, isLoading, isError, isFetching } = useQuery({
-    queryKey: ["movies", name, currentPage],
-    queryFn: () => fetchMovies(name, currentPage),
-    enabled: name.trim() !== "",
-    placeholderData: keepPreviousData,
-    retry: false,
-  });
+  const { data, isSuccess, isLoading, isError, isFetching, isFetched } =
+    useQuery({
+      queryKey: ["movies", name, currentPage],
+      queryFn: () => fetchMovies(name, currentPage),
+      enabled: name.trim() !== "",
+      placeholderData: keepPreviousData,
+      retry: false,
+    });
 
   const fetchQuery = (newQuery: string) => {
     setName(newQuery);
     setCurrentPage(1);
   };
   const totalPages = data?.total_pages ?? 0;
+
+  useEffect(() => {
+    if (isFetched && data?.results?.length === 0) {
+      toast.error("No movies found for your request.", {
+        duration: 1500,
+      });
+    }
+  }, [data, name, isFetched]);
 
   return (
     <>
@@ -57,8 +66,8 @@ export default function App() {
 
       {isFetching || isLoading ? <Loader /> : null}
 
-      {data?.results?.length === 0 &&
-        toast.error("No movies found for your request.")}
+      {/* {data?.results?.length === 0 &&
+        toast.error("No movies found for your request.")} */}
       {isError && <ErrorMessage />}
       {data?.results && (
         <MovieGrid
